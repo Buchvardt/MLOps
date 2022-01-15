@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h1>{% block title %} Welcome to {{ app_name }} {% endblock %}</h1>
+
+
+    <div class="form-group">
+        <label for="counter">Counter</label>
+        <input type="text" name="title"
+                placeholder="{{ cnt }}"" class="form-control"
+                value="{{ request.form['title'] }}"></input>
+    </div>
+
+{% endblock %}

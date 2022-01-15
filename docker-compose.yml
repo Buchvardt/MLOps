@@ -1,0 +1,44 @@
+version: '3'
+
+services:
+  rabbitmq:
+    image: rabbitmq:3.7.8-management
+    container_name: rabbitmq
+    # environment:
+    #     RABBITMQ_DEFAULT_USER: AA
+    #     RABBITMQ_DEFAULT_PASS: BB
+    ports:
+      - 15673:15672
+    networks:
+        - sample_app_net
+    healthcheck:
+      test: [ "CMD", "nc", "-z", "localhost", "5672" ]
+      interval: 5s
+      timeout: 15s
+      retries: 1
+  sample-app:
+    container_name: rest_api
+    build:
+      context: pythoncode/api/.
+      dockerfile: Dockerfile
+    image: myapi:latest
+    ports:
+      - 8000:8000
+    command: gunicorn --log-level debug --graceful-timeout 30 --bind 0.0.0.0:8000 api:app
+    networks:
+      - sample_app_net
+  celery-worker:
+    container_name: celery_worker
+    image: myapi:latest
+    links:
+      - rabbitmq
+    command: celery -A api.celery worker --concurrency=1 -Ofair -n predict --pool=solo
+    networks: 
+      - sample_app_net
+    restart: on-failure
+    depends_on:
+      - rabbitmq
+
+networks:
+  sample_app_net:
+    driver: bridge
